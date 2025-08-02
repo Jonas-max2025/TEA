@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
+import MobileMenu from './components/layout/MobileMenu';
 import Dashboard from './pages/Dashboard';
 import Resources from './pages/Resources';
 import Tracking from './pages/Tracking';
@@ -51,6 +52,7 @@ const mockGoogleEvents: LogEntry[] = [
 const App: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>(initialLogs);
   const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   
   const allLogs = [
@@ -117,11 +119,39 @@ const App: React.FC = () => {
     return PAGE_TITLES[pathKey as keyof typeof PAGE_TITLES] || 'TEA-Conecta';
   };
 
+  const handleMobileMenuToggle = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleMobileMenuClose = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  // Bloquear scroll del body cuando el menú móvil está abierto
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.classList.add('menu-open');
+    } else {
+      document.body.classList.remove('menu-open');
+    }
+
+    return () => {
+      document.body.classList.remove('menu-open');
+    };
+  }, [isMobileMenuOpen]);
+
   return (
     <div className="flex h-screen bg-slate-100">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header title={getTitle(location.pathname)} />
+        <Header 
+          title={getTitle(location.pathname)} 
+          onMenuToggle={handleMobileMenuToggle}
+        />
+        <MobileMenu 
+          isOpen={isMobileMenuOpen} 
+          onClose={handleMobileMenuClose}
+        />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8">
           <Routes>
             <Route path="/" element={<Dashboard appointments={getUpcomingAppointments()} reminders={getActiveReminders()} recentProgress={getRecentProgress()} />} />
