@@ -4,6 +4,11 @@ import Card from '../components/ui/Card';
 import { IconResources, IconTracking, IconTeam, IconCommunity, IconBell } from '../constants';
 import { LogEntry, LogType } from '../types';
 
+// ============================================================================
+// CONFIGURACIÓN DE ACCESOS RÁPIDOS
+// ============================================================================
+// Define los enlaces rápidos que aparecen en el dashboard
+// Cada enlace tiene un nombre, ruta e icono
 const quickLinks = [
   { name: 'Explorar Recursos', href: '/resources', icon: IconResources },
   { name: 'Añadir Registro', href: '/tracking', icon: IconTracking },
@@ -11,50 +16,93 @@ const quickLinks = [
   { name: 'Ver Comunidad', href: '/community', icon: IconCommunity },
 ];
 
+// ============================================================================
+// INTERFAZ DE PROPS DEL COMPONENTE
+// ============================================================================
 interface DashboardProps {
-  appointments: LogEntry[];
-  reminders: LogEntry[];
-  recentProgress: LogEntry[];
+  appointments: LogEntry[];    // Próximas citas para mostrar
+  reminders: LogEntry[];       // Recordatorios activos
+  recentProgress: LogEntry[];  // Avances recientes del niño
 }
 
+// ============================================================================
+// COMPONENTE PRINCIPAL DEL DASHBOARD
+// ============================================================================
+/**
+ * Dashboard principal que muestra un resumen de la actividad
+ * Incluye citas próximas, recordatorios y avances recientes
+ */
 const Dashboard: React.FC<DashboardProps> = ({ appointments, reminders, recentProgress }) => {
   
+  // ============================================================================
+  // FUNCIONES AUXILIARES PARA FORMATEO
+  // ============================================================================
+  
+  /**
+   * Formatea fechas de citas de manera amigable
+   * @param dateString - Fecha en formato YYYY-MM-DD
+   * @param timeString - Hora opcional
+   * @returns Fecha formateada (ej: "Hoy, 10:00" o "Lunes 15, 10:00")
+   */
   const formatAppointmentDate = (dateString: string, timeString?: string) => {
     const date = new Date(`${dateString}T${timeString || '00:00'}`);
     const today = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
 
+    // Casos especiales para "Hoy" y "Mañana"
     if (date.toDateString() === today.toDateString()) {
       return `Hoy, ${timeString || ''}`.trim();
     }
     if (date.toDateString() === tomorrow.toDateString()) {
       return `Mañana, ${timeString || ''}`.trim();
     }
+    
+    // Formato normal para otros días
     return `${date.toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' })}${timeString ? `, ${timeString}`: ''}`;
   };
 
+  /**
+   * Calcula el tiempo restante hasta una cita
+   * @param date - Fecha de la cita
+   * @param time - Hora de la cita
+   * @returns Tiempo formateado (ej: "En 30 min", "En 2 h")
+   */
   const formatTimeUntil = (date: string, time: string) => {
       const now = new Date();
       const apptTime = new Date(`${date}T${time}`);
       const diffMinutes = Math.round((apptTime.getTime() - now.getTime()) / 60000);
 
+      // Casos especiales de tiempo
       if (diffMinutes <= 1) return 'Ahora mismo';
       if (diffMinutes < 60) return `En ${diffMinutes} min`;
+      
+      // Convertir a horas si es más de 1 hora
       const diffHours = Math.round(diffMinutes / 60);
       if (diffHours < 24) return `En ${diffHours} h`;
-      return `Hoy a las ${time}`;
+      
+      return `Hoy a las ${time}`; // Fallback
   };
   
+  // ============================================================================
+  // CONFIGURACIÓN DE ICONOS PARA AVANCES
+  // ============================================================================
+  // Mapea cada tipo de log con un emoji representativo
   const progressIcons = {
-      [LogType.MILESTONE]: '🏆',
-      [LogType.BEHAVIOR]: '😊',
-      [LogType.NOTE]: '📝',
-      [LogType.APPOINTMENT]: '📅',
+      [LogType.MILESTONE]: '🏆',    // Trofeo para hitos importantes
+      [LogType.BEHAVIOR]: '😊',     // Cara feliz para comportamientos positivos
+      [LogType.NOTE]: '📝',         // Nota para observaciones generales
+      [LogType.APPOINTMENT]: '📅',  // Calendario para citas
   }
 
+  // ============================================================================
+  // RENDERIZADO DEL DASHBOARD
+  // ============================================================================
   return (
     <div className="space-y-8">
+      {/* ============================================================================
+          HEADER DEL DASHBOARD - Título y descripción
+          ============================================================================ */}
       <div>
         <h2 className="text-2xl font-bold leading-tight text-slate-900">Bienvenido/a de nuevo,</h2>
         <p className="mt-1 text-slate-600">Aquí tienes un resumen de la actividad reciente y próximos eventos.</p>
